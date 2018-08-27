@@ -15,10 +15,6 @@
 
     <dependencies>
         <!-- inner dependencies begin-->
-        <dependency>
-            <groupId>com.egoist</groupId>
-            <artifactId>parent-pojo</artifactId>
-        </dependency>
         <!-- inner dependencies end-->
 
         <!-- http begin-->

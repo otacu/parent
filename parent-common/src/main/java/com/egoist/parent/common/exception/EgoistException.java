@@ -1,4 +1,4 @@
-package com.egoist.parent.pojo.exception;
+package com.egoist.parent.common.exception;
 
 /**
  *  自定义异常

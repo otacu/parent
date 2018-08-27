@@ -3,7 +3,7 @@ package com.egoist.parent.common.utils.http;
 import com.alibaba.fastjson.JSONObject;
 import com.egoist.parent.common.constants.EgoistExceptionStatusConstant;
 import com.egoist.parent.common.utils.json.EgoistJsonUtil;
-import com.egoist.parent.pojo.exception.EgoistException;
+import com.egoist.parent.common.exception.EgoistException;
 import okhttp3.*;
 import okio.ByteString;
 

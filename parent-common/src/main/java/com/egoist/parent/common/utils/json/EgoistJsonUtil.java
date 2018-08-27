@@ -1,6 +1,6 @@
 package com.egoist.parent.common.utils.json;
 
-import com.egoist.parent.pojo.exception.EgoistException;
+import com.egoist.parent.common.exception.EgoistException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;

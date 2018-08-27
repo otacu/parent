@@ -15,6 +15,10 @@
 	
 	<dependencies>
 		<!-- inner dependencies begin-->
+		<dependency>
+			<groupId>com.egoist</groupId>
+			<artifactId>parent-common</artifactId>
+		</dependency>
 		<!-- inner dependencies end-->
 
 	</dependencies>
