@@ -3,6 +3,7 @@ package com.egoist.parent.pojo.dto;
 import com.egoist.parent.common.constants.EgoistResultStatusConstants;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * 方法统一返回类
@@ -147,6 +148,19 @@ public class EgoistResult implements Serializable {
     public EgoistResult setData(Object data) {
         this.data = data;
         return this;
+    }
+
+    /**
+     * 判断EgoistResult的结果是否成功
+     *
+     * @param result EgoistResult
+     * @return status==200：true or false
+     */
+    public static Boolean isOk(EgoistResult result) {
+        if (Objects.isNull(result)) {
+            return Boolean.FALSE;
+        }
+        return result.getStatus() == OK_STATUS ? Boolean.TRUE : Boolean.FALSE;
     }
 
     /**
