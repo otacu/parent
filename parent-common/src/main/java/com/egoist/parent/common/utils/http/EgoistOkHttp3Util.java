@@ -1,22 +1,27 @@
 package com.egoist.parent.common.utils.http;
 
 import com.alibaba.fastjson.JSONObject;
-import com.egoist.parent.common.constants.EgoistExceptionStatusConstant;
-import com.egoist.parent.common.utils.json.EgoistJsonUtil;
+import com.egoist.parent.common.constants.EgoistResultStatusConstants;
 import com.egoist.parent.common.exception.EgoistException;
+import com.egoist.parent.common.utils.json.EgoistJsonUtil;
 import okhttp3.*;
 import okio.ByteString;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.File;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-/**
- * html工具类
- */
 public final class EgoistOkHttp3Util {
+
     private EgoistOkHttp3Util() {
     }
 
@@ -40,6 +45,11 @@ public final class EgoistOkHttp3Util {
     /**
      * application/x-www-form-urlencoded
      */
+    public static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
+
+    /**
+     * application/x-www-form-urlencoded
+     */
     public static final MediaType MEDIA_TYPE = MediaType.parse("application/x-www-form-urlencoded; charset=utf-8");
 
     /**
@@ -48,9 +58,12 @@ public final class EgoistOkHttp3Util {
     public static final MediaType MEDIA_OCTET_STREAM = MediaType.parse("application/octet-stream");
 
     static {
-        client = new OkHttpClient().newBuilder().connectTimeout(TIMEOUT, TimeUnit.SECONDS)
-                .readTimeout(TIMEOUT2, TimeUnit.SECONDS)
-                .writeTimeout(TIMEOUT2, TimeUnit.SECONDS)
+        TrustAllManager trustAllManager = new TrustAllManager();
+        client = new OkHttpClient().newBuilder()
+                .sslSocketFactory(createTrustAllSSLFactory(trustAllManager), trustAllManager)
+                .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
+                .readTimeout(TIMEOUT, TimeUnit.SECONDS)
+                .writeTimeout(TIMEOUT, TimeUnit.SECONDS)
                 .build();
     }
 
@@ -62,21 +75,46 @@ public final class EgoistOkHttp3Util {
      * @return 返回回来的JSONObject
      * @throws EgoistException 异常
      */
+    @Deprecated
     public static JSONObject post(String url, Map<String, Object> map) throws EgoistException {
-        StringBuilder context = new StringBuilder();
-        // 遍历map
-        if (map != null) {
-            Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, Object> entry = iterator.next();
-                context.append(entry.getKey()).append("=").append(entry.getValue());
-                if (iterator.hasNext()) {
-                    context.append("&");
+        return post(url, map, MEDIA_TYPE);
+    }
+
+    /**
+     * 同步发送post请求 map为body
+     *
+     * @param url       请求url
+     * @param map       请求map参数
+     * @param mediaType mediaType
+     * @return 返回回来的JSONObject
+     * @throws EgoistException 异常
+     */
+    @Deprecated
+    public static JSONObject post(String url, Map<String, Object> map, MediaType mediaType) throws EgoistException {
+
+        String httpContent;
+        if (MEDIA_TYPE.equals(mediaType)) {
+            StringBuilder context = new StringBuilder();
+            // 遍历map
+            if (map != null) {
+                Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<String, Object> entry = iterator.next();
+                    context.append(entry.getKey()).append("=").append(entry.getValue());
+                    if (iterator.hasNext()) {
+                        context.append("&");
+                    }
                 }
             }
+            httpContent = context.toString();
+        } else if (JSON_MEDIA_TYPE.equals(mediaType)) {
+            httpContent = EgoistJsonUtil.objectToJson(map);
+        } else {
+            throw new EgoistException("不支持的MIME类型");
         }
 
-        RequestBody body = RequestBody.create(MEDIA_TYPE, context.toString());
+
+        RequestBody body = RequestBody.create(mediaType, httpContent);
         Request request = new Request.Builder().url(url).post(body).build();
         try {
             Response response = client.newCall(request).execute();
@@ -84,12 +122,13 @@ public final class EgoistOkHttp3Util {
                 String data = response.body().string();
                 return EgoistJsonUtil.jsonToPojo(data, JSONObject.class);
             }
-            throw new EgoistException("服务器解析错误...", EgoistExceptionStatusConstant.STATUS_400);
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
         } catch (Exception e) {
             throw new EgoistException(e);
         }
 
     }
+
 
     /**
      * 同步发送post请求 map为body
@@ -101,28 +140,24 @@ public final class EgoistOkHttp3Util {
      * @throws EgoistException 异常
      */
     public static String postMap(String url, Map<String, Object> map) throws EgoistException {
-        StringBuilder context = new StringBuilder();
+        FormBody.Builder builder = new FormBody.Builder();
         // 遍历map
         if (map != null) {
             Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator();
             while (iterator.hasNext()) {
                 Map.Entry<String, Object> entry = iterator.next();
-                context.append(entry.getKey()).append("=").append(entry.getValue());
-                if (iterator.hasNext()) {
-                    context.append("&");
-                }
+                builder.add(entry.getKey(), entry.getValue().toString());
             }
         }
-
-        RequestBody body = RequestBody.create(EgoistOkHttp3Util.MEDIA_TYPE, context.toString());
-        Request request = new Request.Builder().url(url).post(body).build();
+        RequestBody formBody = builder.build();
+        Request request = new Request.Builder().url(url).post(formBody).build();
         try {
             Response response = client.newCall(request).execute();
             if (response.isSuccessful()) {
                 String data = response.body().string();
                 return data;
             }
-            throw new EgoistException("服务器解析错误...", EgoistExceptionStatusConstant.STATUS_400);
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
         } catch (Exception e) {
             throw new EgoistException(e);
         }
@@ -159,12 +194,13 @@ public final class EgoistOkHttp3Util {
                 String data = response.body().string();
                 return data;
             }
-            throw new EgoistException("服务器解析错误...", EgoistExceptionStatusConstant.STATUS_400);
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
         } catch (Exception e) {
             throw new EgoistException(e);
         }
 
     }
+
 
     /**
      * 同步发送post请求 map为body
@@ -175,8 +211,22 @@ public final class EgoistOkHttp3Util {
      * @throws EgoistException 异常
      */
     public static String postString(String url, String context) throws EgoistException {
+        return postString(url, MEDIA_TYPE, context);
 
-        RequestBody body = RequestBody.create(MEDIA_TYPE, context);
+    }
+
+    /**
+     * 同步发送post请求 map为body
+     *
+     * @param url       请求url
+     * @param mediaType mediaType
+     * @param context   请求参数
+     * @return 返回回来的JSONObject
+     * @throws EgoistException 异常
+     */
+    public static String postString(String url, MediaType mediaType, String context) throws EgoistException {
+
+        RequestBody body = RequestBody.create(mediaType, context);
         Request request = new Request.Builder().url(url).post(body).build();
         try {
             Response response = client.newCall(request).execute();
@@ -184,11 +234,31 @@ public final class EgoistOkHttp3Util {
                 String data = response.body().string();
                 return data;
             }
-            throw new EgoistException("服务器解析错误...", EgoistExceptionStatusConstant.STATUS_400);
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
         } catch (Exception e) {
             throw new EgoistException(e);
         }
 
+    }
+
+    /**
+     * 同步发送post请求 map为body
+     *
+     * @param url  请求url
+     * @param json 请求参数
+     * @return 返回回来的JSONObject
+     * @throws Exception 异常
+     */
+    public static String postJson(String url, String json) throws Exception {
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        Request request = new Request.Builder().url(url).post(body).build();
+        Response response = client.newCall(request).execute();
+        if (response.isSuccessful()) {
+            String data = response.body().string();
+            return data;
+        }
+
+        return "请求失败，请检查参数";
     }
 
 
@@ -218,7 +288,7 @@ public final class EgoistOkHttp3Util {
                 String data = response.body().string();
                 return EgoistJsonUtil.jsonToPojo(data, JSONObject.class);
             }
-            throw new EgoistException("服务器解析错误...", EgoistExceptionStatusConstant.STATUS_400);
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
         } catch (Exception e) {
             throw new EgoistException(e);
         }
@@ -250,7 +320,7 @@ public final class EgoistOkHttp3Util {
                 String data = response.body().string();
                 return EgoistJsonUtil.jsonToPojo(data, JSONObject.class);
             }
-            throw new EgoistException("服务器解析错误...", EgoistExceptionStatusConstant.STATUS_400);
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
         } catch (Exception e) {
             throw new EgoistException(e);
         }
@@ -272,7 +342,7 @@ public final class EgoistOkHttp3Util {
         }
         if (files.length == 0) {
             // if (null == file || !file.exists() || !file.canRead() || !file.isFile()) {
-            throw new EgoistException("上传文件非法", EgoistExceptionStatusConstant.STATUS_400);
+            throw new EgoistException("上传文件非法", EgoistResultStatusConstants.STATUS_400);
             // }
         }
 
@@ -302,10 +372,184 @@ public final class EgoistOkHttp3Util {
                 String data = response.body().string();
                 return EgoistJsonUtil.jsonToPojo(data, JSONObject.class);
             }
-            throw new EgoistException("服务器解析错误...", EgoistExceptionStatusConstant.STATUS_400);
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
         } catch (Exception e) {
             throw new EgoistException(e);
         }
 
     }
+
+    /**
+     * 同步发送post请求 map为body，带请求头
+     *
+     * @param url      请求url
+     * @param map      请求头
+     * @param postJson 请求报文
+     * @return 返回回来的JSONObject
+     * @throws EgoistException 异常
+     */
+    public static JSONObject postHeaderBody(String url, Map map, String postJson) throws EgoistException {
+
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, postJson);
+        Request request = new Request.Builder().url(url).headers(Headers.of(map)).post(body).build();
+        try {
+            Response response = client.newCall(request).execute();
+            if (response.isSuccessful()) {
+                String data = response.body().string();
+                return EgoistJsonUtil.jsonToPojo(data, JSONObject.class);
+            }
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new EgoistException(e);
+        }
+    }
+
+    /**
+     * 同步发送post表单请求
+     *
+     * @param url       请求url
+     * @param headerMap 请求头
+     * @param bodys     请求内容
+     * @return 返回回来的JSONObject
+     * @throws EgoistException 自定义异常
+     */
+    public static JSONObject post(String url, Map<String, String> headerMap, Map<String, Object> bodys) throws EgoistException {
+        FormBody.Builder builder = new FormBody.Builder();
+        // 遍历bodys
+        if (bodys != null) {
+            Iterator<Map.Entry<String, Object>> iterator = bodys.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, Object> entry = iterator.next();
+                builder.add(entry.getKey(), entry.getValue().toString());
+            }
+        }
+        RequestBody formBody = builder.build();
+        Request request = new Request.Builder().url(url).headers(Headers.of(headerMap)).post(formBody).build();
+        try {
+            Response response = client.newCall(request).execute();
+            if (response.isSuccessful()) {
+                String data = response.body().string();
+                return EgoistJsonUtil.jsonToPojo(data, JSONObject.class);
+            }
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
+        } catch (Exception e) {
+            throw new EgoistException(e);
+        }
+    }
+
+    /**
+     * 同步发送post请求 map为body 【洋桃同步洋葱专用】
+     *
+     * @param url     请求url
+     * @param headMap 请求头map参数
+     * @param map     请求map参数
+     * @return 返回回来的JSONObject
+     * @throws EgoistException 异常
+     */
+    public static JSONObject postHeaderBody(String url, Map headMap, Map<String, Object> map) throws EgoistException {
+        FormBody.Builder builder = new FormBody.Builder();
+        // 遍历map
+        if (map != null) {
+            Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, Object> entry = iterator.next();
+                builder.add(entry.getKey(), entry.getValue().toString());
+            }
+        }
+        RequestBody formBody = builder.build();
+        Request request = new Request.Builder().url(url).headers(Headers.of(headMap)).post(formBody).build();
+        try {
+            Response response = client.newCall(request).execute();
+            if (response.isSuccessful()) {
+                String data = response.body().string();
+                return EgoistJsonUtil.jsonToPojo(data, JSONObject.class);
+            }
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
+        } catch (Exception e) {
+            throw new EgoistException(e);
+        }
+
+    }
+
+    /**
+     * 创建信任所有sslFactory
+     *
+     * @param trustAllManager TrustAllManager
+     * @return SSLSocketFactory
+     */
+    protected static SSLSocketFactory createTrustAllSSLFactory(TrustAllManager trustAllManager) {
+        SSLSocketFactory ssfFactory = null;
+        try {
+            SSLContext sc = SSLContext.getInstance("TLSv1.2");
+            sc.init(null, new TrustManager[]{trustAllManager}, new SecureRandom());
+            ssfFactory = sc.getSocketFactory();
+        } catch (Exception ignored) {
+            ignored.printStackTrace();
+        }
+
+        return ssfFactory;
+    }
+
+    /**
+     * 发起get请求
+     *
+     * @param url url
+     * @return 处理结果
+     * @throws EgoistException 异常
+     */
+    public static String get(String url) throws EgoistException {
+        Request request = new Request.Builder().url(url).get().build();
+        try {
+            Response response = client.newCall(request).execute();
+            if (response.isSuccessful()) {
+                return response.body().string();
+            }
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new EgoistException(e);
+        }
+    }
+
+    /**
+     * 发起get请求
+     *
+     * @param url url
+     * @return 处理结果
+     * @throws EgoistException 异常
+     */
+    public static JSONObject get(String url, Map headMap) throws EgoistException {
+        Request request = new Request.Builder().url(url).headers(Headers.of(headMap)).get().build();
+        try {
+            Response response = client.newCall(request).execute();
+            if (response.isSuccessful()) {
+                String data = response.body().string();
+                return EgoistJsonUtil.jsonToPojo(data, JSONObject.class);
+            }
+            throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new EgoistException(e);
+        }
+    }
 }
+
+/**
+ * 信任ssl的类
+ */
+class TrustAllManager implements X509TrustManager {
+    @Override
+    public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+    }
+
+    @Override
+    public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+    }
+
+    @Override
+    public X509Certificate[] getAcceptedIssuers() {
+        return new X509Certificate[0];
+    }
+}
+
