@@ -64,6 +64,7 @@ public final class EgoistOkHttp3Util {
                 .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
                 .readTimeout(TIMEOUT, TimeUnit.SECONDS)
                 .writeTimeout(TIMEOUT, TimeUnit.SECONDS)
+//                .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("101.89.78.26", 8080)))
                 .build();
     }
 
