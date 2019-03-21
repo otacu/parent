@@ -10,14 +10,14 @@
 		<version>1.0.0</version>
 	</parent>
 	
-    <artifactId>parent-service</artifactId>
-	<name>parent-service</name>
+    <artifactId>parent-interface</artifactId>
+	<name>parent-interface</name>
 	
 	<dependencies>
 		<!-- inner dependencies begin-->
 		<dependency>
 			<groupId>com.egoist</groupId>
-			<artifactId>parent-ext</artifactId>
+			<artifactId>parent-pojo</artifactId>
 		</dependency>
 		<!-- inner dependencies end-->
 

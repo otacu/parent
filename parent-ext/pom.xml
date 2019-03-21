@@ -10,17 +10,25 @@
 		<version>1.0.0</version>
 	</parent>
 	
-    <artifactId>parent-service</artifactId>
-	<name>parent-service</name>
+    <artifactId>parent-ext</artifactId>
+	<name>parent-ext</name>
 	
 	<dependencies>
 		<!-- inner dependencies begin-->
 		<dependency>
 			<groupId>com.egoist</groupId>
-			<artifactId>parent-ext</artifactId>
+			<artifactId>parent-dao</artifactId>
+		</dependency>
+	    <dependency>
+			<groupId>com.egoist</groupId>
+			<artifactId>parent-interface</artifactId>
 		</dependency>
 		<!-- inner dependencies end-->
 
+		<dependency>
+			<groupId>com.lmax</groupId>
+			<artifactId>disruptor</artifactId>
+		</dependency>
 	</dependencies>
 
 </project>
