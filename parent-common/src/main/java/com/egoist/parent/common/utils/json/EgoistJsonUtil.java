@@ -26,8 +26,6 @@ public final class EgoistJsonUtil {
      * @param data 目标数据
      * @return 返回Json字符串
      * @throws EgoistException 异常
-     * @Author: HeroCao hero-cao@msyc.cc
-     * @Date: 2017年2月16日 下午7:01:37
      */
     public static String objectToJson(Object data) throws EgoistException {
 //        if (null == data) {
@@ -48,8 +46,6 @@ public final class EgoistJsonUtil {
      * @param <T>      POJO类型
      * @return 返回目标POJO实例对象
      * @throws EgoistException 异常
-     * @Author: HeroCao hero-cao@msyc.cc
-     * @Date: 2017年2月16日 下午7:01:37
      */
     public static <T> T jsonToPojo(String json, Class<T> beanType) throws EgoistException {
         try {
@@ -71,8 +67,6 @@ public final class EgoistJsonUtil {
      * @param <T>      POJO类型
      * @return 返回目标POJO的集合
      * @throws EgoistException 异常
-     * @Author: HeroCao hero-cao@msyc.cc
-     * @Date: 2017年2月16日 下午7:01:37
      */
     public static <T> List<T> jsonToList(String json, Class<T> beanType) throws EgoistException {
         try {
