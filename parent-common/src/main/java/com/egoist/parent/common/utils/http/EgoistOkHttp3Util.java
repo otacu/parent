@@ -7,10 +7,7 @@ import com.egoist.parent.common.utils.json.EgoistJsonUtil;
 import okhttp3.*;
 import okio.ByteString;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 import java.io.File;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -61,6 +58,12 @@ public final class EgoistOkHttp3Util {
         TrustAllManager trustAllManager = new TrustAllManager();
         client = new OkHttpClient().newBuilder()
                 .sslSocketFactory(createTrustAllSSLFactory(trustAllManager), trustAllManager)
+                .hostnameVerifier(new HostnameVerifier() {
+                    @Override
+                    public boolean verify(String hostname, SSLSession session) {
+                        return true;
+                    }
+                })
                 .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
                 .readTimeout(TIMEOUT, TimeUnit.SECONDS)
                 .writeTimeout(TIMEOUT, TimeUnit.SECONDS)
