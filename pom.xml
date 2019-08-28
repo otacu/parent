@@ -40,6 +40,7 @@
         <pagehelper.spring.boot.starter.version>1.2.10</pagehelper.spring.boot.starter.version>
         <spring.boot.version>2.1.7.RELEASE</spring.boot.version>
         <spring.boot.data.elasticsearch.starter.version>2.1.7.RELEASE</spring.boot.data.elasticsearch.starter.version>
+        <commons-beanutils.version>1.9.4</commons-beanutils.version>
     </properties>
 
     <dependencyManagement>
@@ -221,6 +222,12 @@
                 <groupId>com.lmax</groupId>
                 <artifactId>disruptor</artifactId>
                 <version>${disruptor.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${commons-beanutils.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
