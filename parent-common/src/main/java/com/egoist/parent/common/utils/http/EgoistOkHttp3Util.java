@@ -30,7 +30,7 @@ public final class EgoistOkHttp3Util {
     /**
      * 超时时间
      */
-    public static final int TIMEOUT = 90;
+    public static final int TIMEOUT = 10000;
 
 
     /**
