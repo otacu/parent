@@ -163,6 +163,10 @@ public class EgoistResult implements Serializable {
         return result.getStatus() == OK_STATUS ? Boolean.TRUE : Boolean.FALSE;
     }
 
+    public static Boolean isNotOk(EgoistResult result) {
+       return !isOk(result);
+    }
+
     /**
      * toString
      *
