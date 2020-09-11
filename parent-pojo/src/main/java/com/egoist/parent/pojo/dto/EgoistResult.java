@@ -167,6 +167,14 @@ public class EgoistResult implements Serializable {
        return !isOk(result);
     }
 
+    public static EgoistResult build(Integer status, String msg, Object data) {
+        return new EgoistResult(status, msg, data);
+    }
+
+    public static EgoistResult fail(String msg) {
+        return new EgoistResult(EgoistResultStatusConstants.STATUS_400, msg, null);
+    }
+
     /**
      * toString
      *
