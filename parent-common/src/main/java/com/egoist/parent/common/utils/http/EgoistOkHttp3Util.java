@@ -523,7 +523,7 @@ public final class EgoistOkHttp3Util {
      * @return 处理结果
      * @throws EgoistException 异常
      */
-    public static JSONObject get(String url, Map headMap) throws EgoistException {
+    public static JSONObject getJson(String url, Map headMap) throws EgoistException {
         Request request = new Request.Builder().url(url).headers(Headers.of(headMap)).get().build();
         try {
             Response response = client.newCall(request).execute();
@@ -532,6 +532,24 @@ public final class EgoistOkHttp3Util {
                 return EgoistJsonUtil.jsonToPojo(data, JSONObject.class);
             }
             throw new EgoistException("服务器解析错误...", EgoistResultStatusConstants.STATUS_400);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new EgoistException(e);
+        }
+    }
+
+    /**
+     * 发起get请求
+     *
+     * @param url url
+     * @return 处理结果
+     * @throws EgoistException 异常
+     */
+    public static Response get(String url, Map headMap) throws EgoistException {
+        Request request = new Request.Builder().url(url).headers(Headers.of(headMap)).get().build();
+        try {
+            Response response = client.newCall(request).execute();
+            return response;
         } catch (Exception e) {
             e.printStackTrace();
             throw new EgoistException(e);
